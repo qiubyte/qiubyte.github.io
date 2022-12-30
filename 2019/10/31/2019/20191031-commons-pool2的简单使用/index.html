@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform">
+  <meta http-equiv="Cache-Control" content="no-siteapp">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000">
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top">
+  
+  
+  <title>commons-pool2的简单使用 | qiubyte&#39;s blog</title>
+  <meta name="description" content="apache commons-pool是apache基金会的一个开源对象池组件，基于此可以快速的建立一个对象池。">
+<meta name="keywords" content="pool,apache">
+<meta property="og:type" content="article">
+<meta property="og:title" content="commons-pool2的简单使用">
+<meta property="og:url" content="https://qiubyte.github.io/2019/10/31/2019/20191031-commons-pool2的简单使用/index.html">
+<meta property="og:site_name" content="qiubyte">
+<meta property="og:description" content="apache commons-pool是apache基金会的一个开源对象池组件，基于此可以快速的建立一个对象池。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-12-30T02:12:00.718Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="commons-pool2的简单使用">
+<meta name="twitter:description" content="apache commons-pool是apache基金会的一个开源对象池组件，基于此可以快速的建立一个对象池。">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://qiubyte.github.io/2019/10/31/2019/20191031-commons-pool2的简单使用/index.html">
+  
+  
+    <link rel="icon" href="/favicon.jpg" type="image/x-icon">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+  
+  
+  
+</head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://qiubyte.github.io/" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">qiubyte</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md"></h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Hangzhou, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友情链接</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/qiubyte" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/Java/">Java</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Java框架/">Java框架</a><span class="category-list-count">1</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/Java框架/SpringBoot/">SpringBoot</a><span class="category-list-count">1</span></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/MySQL/">MySQL</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/SpringBoot/">SpringBoot</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/maven/">maven</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/software/">software</a><span class="category-list-count">2</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/software/mysql/">mysql</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/software/tomcat/">tomcat</a><span class="category-list-count">1</span></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/tools/">tools</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/ArrayList/">ArrayList</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/">Java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/List/">List</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MySQL/">MySQL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SpringBoot/">SpringBoot</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Undertow/">Undertow</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Windows/">Windows</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/apache/">apache</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/">mysql</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pool/">pool</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tomcat/">tomcat</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tools/">tools</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/ArrayList/" style="font-size: 13px;">ArrayList</a> <a href="/tags/Java/" style="font-size: 13px;">Java</a> <a href="/tags/List/" style="font-size: 13px;">List</a> <a href="/tags/MySQL/" style="font-size: 13px;">MySQL</a> <a href="/tags/SpringBoot/" style="font-size: 14px;">SpringBoot</a> <a href="/tags/Undertow/" style="font-size: 13px;">Undertow</a> <a href="/tags/Windows/" style="font-size: 13px;">Windows</a> <a href="/tags/apache/" style="font-size: 13px;">apache</a> <a href="/tags/mysql/" style="font-size: 13px;">mysql</a> <a href="/tags/pool/" style="font-size: 13px;">pool</a> <a href="/tags/tomcat/" style="font-size: 13px;">tomcat</a> <a href="/tags/tools/" style="font-size: 13px;">tools</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/12/">十二月 2022</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/11/">十一月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">十月 2019</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">九月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/01/">一月 2018</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+  </div>
+</aside>
+
+  
+  
+<aside class="sidebar sidebar-toc collapse in" id="collapseToc" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    <nav id="toc" class="article-toc">
+      <h3 class="toc-title">文章目录</h3>
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#common-pool2的使用"><span class="toc-number">2.</span> <span class="toc-text">common-pool2的使用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#maven依赖"><span class="toc-number">2.1.</span> <span class="toc-text">maven依赖</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#mysql测试相关信息"><span class="toc-number">2.2.</span> <span class="toc-text">mysql测试相关信息</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#工厂模式创建管理的对象"><span class="toc-number">2.3.</span> <span class="toc-text">工厂模式创建管理的对象</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#编写测试类"><span class="toc-number">2.4.</span> <span class="toc-text">编写测试类</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#性能测试"><span class="toc-number">3.</span> <span class="toc-text">性能测试</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#未使用对象池"><span class="toc-number">3.1.</span> <span class="toc-text">未使用对象池</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#性能对比测试"><span class="toc-number">3.2.</span> <span class="toc-text">性能对比测试</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#common-pool2应用"><span class="toc-number">4.</span> <span class="toc-text">common-pool2应用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">5.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#相关链接"><span class="toc-number">6.</span> <span class="toc-text">相关链接</span></a></li></ol>
+    </nav>
+  </div>
+</aside>
+
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-2019/20191031-commons-pool2的简单使用" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      commons-pool2的简单使用
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2019/10/31/2019/20191031-commons-pool2的简单使用/" class="article-date">
+	  <time datetime="2019-10-31T12:00:00.000Z" itemprop="datePublished">2019-10-31</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/Java/">Java</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link" href="/tags/apache/">apache</a>, <a class="article-tag-link" href="/tags/pool/">pool</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2019/10/31/2019/20191031-commons-pool2的简单使用/#comments" class="article-comment-link">评论</a></span>
+        
+	
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计: 1.9k(字)</span>
+	
+	
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长: 9(分)</span>
+	
+
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <p>apache commons-pool是apache基金会的一个开源对象池组件，基于此可以快速的建立一个对象池。</p>
+<a id="more"></a>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><ol>
+<li>在开发的过程中，有一种资源连接的创建和初始化所需要的时间比较长，例如数据库连接、IO等，如果频繁的创建和关闭连接，会极大的降低系统的性能，对资源服务的性能稳定也是一种考验。</li>
+<li>下面介绍一种方法就是使用对象池，对象池会在初始化的时候创建一定数量的连接，对象池创建的对象实际并不会每次都重新创建和关闭，而是保存在对象池中，每次访问只需要从连接池中获取连接，使用完毕后归还在对象池中即可。这样可以保证程序重复使用连接，从而提高性能。</li>
+<li>我们使用开源的组件apache-common-pool2管理mysql连接，来简单介绍common-pool2的使用。</li>
+</ol>
+<h2 id="common-pool2的使用"><a href="#common-pool2的使用" class="headerlink" title="common-pool2的使用"></a>common-pool2的使用</h2><h3 id="maven依赖"><a href="#maven依赖" class="headerlink" title="maven依赖"></a>maven依赖</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">&lt;commons-pool2.version&gt;2.7.0&lt;/commons-pool2.version&gt;</span><br><span class="line">&lt;mysql.version&gt;8.0.18&lt;/mysql.version&gt;</span><br><span class="line">&lt;junit.version&gt;5.5.1&lt;/junit.version&gt;</span><br><span class="line"></span><br><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;org.apache.commons&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;commons-pool2&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;$&#123;commons-pool2.version&#125;&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;mysql&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;mysql-connector-java&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;$&#123;mysql.version&#125;&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br><span class="line"></span><br><span class="line">&lt;!--用于测试用例编写--&gt;</span><br><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;org.junit.jupiter&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;junit-jupiter-api&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;$&#123;junit.version&#125;&lt;/version&gt;</span><br><span class="line">    &lt;scope&gt;test&lt;/scope&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="mysql测试相关信息"><a href="#mysql测试相关信息" class="headerlink" title="mysql测试相关信息"></a>mysql测试相关信息</h3><ol>
+<li>数据库名：test，表名：t_user，<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">DROP TABLE IF EXISTS `t_user`;</span><br><span class="line">CREATE TABLE `t_user`  (</span><br><span class="line">  `id` bigint(11) NOT NULL AUTO_INCREMENT,</span><br><span class="line">  `username` varchar(255) DEFAULT NULL,</span><br><span class="line">  `password` varchar(255) DEFAULT NULL,</span><br><span class="line">  PRIMARY KEY (`id`)</span><br><span class="line">)</span><br><span class="line">INSERT INTO `t_user` VALUES (1, &apos;zhangsan&apos;, &apos;01d7f40760960e7bd9443513f22ab9af&apos;);</span><br></pre></td></tr></table></figure>
+
+</li>
+</ol>
+<h3 id="工厂模式创建管理的对象"><a href="#工厂模式创建管理的对象" class="headerlink" title="工厂模式创建管理的对象"></a>工厂模式创建管理的对象</h3><ol>
+<li>创建MysqlJdbcFactory需要继承BasePooledObjectFactory这个抽象类 ,它实现了PooledObjectFactory<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br></pre></td><td class="code"><pre><span class="line">import lombok.extern.slf4j.Slf4j;</span><br><span class="line">import org.apache.commons.pool2.BasePooledObjectFactory;</span><br><span class="line">import org.apache.commons.pool2.PooledObject;</span><br><span class="line">import org.apache.commons.pool2.impl.DefaultPooledObject;</span><br><span class="line"></span><br><span class="line">import java.sql.Connection;</span><br><span class="line">import java.sql.DriverManager;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * @author qiubyte</span><br><span class="line"> * @date 2019/10/31 19:32</span><br><span class="line"> */</span><br><span class="line">@Slf4j</span><br><span class="line">public class MysqlJdbcFactory extends BasePooledObjectFactory&lt;Connection&gt; &#123;</span><br><span class="line"></span><br><span class="line">    private String url;</span><br><span class="line">    private String className = &quot;com.mysql.cj.jdbc.Driver&quot;;</span><br><span class="line">    private String username;</span><br><span class="line">    private String password;</span><br><span class="line"></span><br><span class="line">    public MysqlJdbcFactory(String url, String className, String username, String password) &#123;</span><br><span class="line">        this.url = url;</span><br><span class="line">        this.className = className;</span><br><span class="line">        this.username = username;</span><br><span class="line">        this.password = password;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public MysqlJdbcFactory(String url, String username, String password) &#123;</span><br><span class="line">        this.url = url;</span><br><span class="line">        this.username = username;</span><br><span class="line">        this.password = password;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 间接实现 PooledObjectFactory#makeObject()方法，表明怎样创建需要管理对象</span><br><span class="line">     *</span><br><span class="line">     * @return 连接</span><br><span class="line">     * @throws Exception e</span><br><span class="line">     */</span><br><span class="line">    @Override</span><br><span class="line">    public Connection create() throws Exception &#123;</span><br><span class="line">        // 指定连接类型</span><br><span class="line">        Class.forName(className);</span><br><span class="line">        // 获取连接</span><br><span class="line">        return DriverManager.getConnection(url, username, password);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 在common-pool2中为了统计管理的对象的一些信息，比如调用次数，空闲时间，上次使用时间等，</span><br><span class="line">     * 需要对管理的对象进行包装，然后在放入到对象池中</span><br><span class="line">     *</span><br><span class="line">     * @param connection 对象池要管理的对象</span><br><span class="line">     * @return 返回包装后的PooledObject对象</span><br><span class="line">     */</span><br><span class="line">    @Override</span><br><span class="line">    public PooledObject&lt;Connection&gt; wrap(Connection connection) &#123;</span><br><span class="line">        return new DefaultPooledObject&lt;&gt;(connection);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 调用该方法激活对象</span><br><span class="line">     *</span><br><span class="line">     * @param p p</span><br><span class="line">     * @throws Exception e</span><br><span class="line">     */</span><br><span class="line">    @Override</span><br><span class="line">    public void activateObject(PooledObject&lt;Connection&gt; p) throws Exception &#123;</span><br><span class="line">        super.activateObject(p);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 归还对象时钝化对象，比如某些对象用完之后需要休眠一段时间</span><br><span class="line">     *</span><br><span class="line">     * @param p p</span><br><span class="line">     * @throws Exception e</span><br><span class="line">     */</span><br><span class="line">    @Override</span><br><span class="line">    public void passivateObject(PooledObject&lt;Connection&gt; p) throws Exception &#123;</span><br><span class="line">        super.passivateObject(p);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * testOnBorrow设置为true时，创建对象时调用该方法验证对象的有效性，如果无效直接抛出异常 &quot;Unable to validate object&quot;</span><br><span class="line">     * testOnReturn设置为true时，归还对象时验证对象是否还有效，比如连接是否还在，如果无效了则不往对象池中放对象</span><br><span class="line">     *</span><br><span class="line">     * @param p p</span><br><span class="line">     * @return 是否可用</span><br><span class="line">     */</span><br><span class="line">    @Override</span><br><span class="line">    public boolean validateObject(PooledObject&lt;Connection&gt; p) &#123;</span><br><span class="line">        boolean valid = true;</span><br><span class="line">        try &#123;</span><br><span class="line">            p.getObject().prepareStatement(&quot;select 1&quot;).execute();</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            log.error(e.getMessage(), e);</span><br><span class="line">            valid = false;</span><br><span class="line">        &#125;</span><br><span class="line">        return valid;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 归还对象时</span><br><span class="line">     * 1.调用validateObject 验证对象失败</span><br><span class="line">     * 2.连接池被关闭</span><br><span class="line">     * 3.归还对象时连接池中空闲的对象数量大于等于maxIdle</span><br><span class="line">     * 若符合上述三种情况之一, 都会调用这个方法销毁对象</span><br><span class="line">     * 在驱逐线程启动进行检查是符合驱逐策略也会调用这个方法销毁对象</span><br><span class="line">     *</span><br><span class="line">     * @param p p</span><br><span class="line">     * @throws Exception e</span><br><span class="line">     */</span><br><span class="line">    @Override</span><br><span class="line">    public void destroyObject(PooledObject&lt;Connection&gt; p) throws Exception &#123;</span><br><span class="line">        Connection conn = p.getObject();</span><br><span class="line">        if (null != conn) &#123;</span><br><span class="line">            conn.close();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+</li>
+</ol>
+<h3 id="编写测试类"><a href="#编写测试类" class="headerlink" title="编写测试类"></a>编写测试类</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line">import lombok.extern.slf4j.Slf4j;</span><br><span class="line">import org.apache.commons.pool2.ObjectPool;</span><br><span class="line">import org.apache.commons.pool2.impl.GenericObjectPool;</span><br><span class="line">import org.apache.commons.pool2.impl.GenericObjectPoolConfig;</span><br><span class="line">import org.junit.jupiter.api.BeforeAll;</span><br><span class="line">import org.junit.jupiter.api.DisplayName;</span><br><span class="line">import org.junit.jupiter.api.Test;</span><br><span class="line"></span><br><span class="line">import java.sql.Connection;</span><br><span class="line">import java.sql.PreparedStatement;</span><br><span class="line">import java.sql.ResultSet;</span><br><span class="line">import java.sql.SQLException;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * jdbc连接池 测试</span><br><span class="line"> * @author qiubyte</span><br><span class="line"> * @date 2019/10/31 19:31</span><br><span class="line"> */</span><br><span class="line">@Slf4j</span><br><span class="line">public class JdbcPool2Test &#123;</span><br><span class="line">    private static final String URL = &quot;jdbc:mysql://172.26.13.10:3306/test&quot;;</span><br><span class="line">    private static final String USERNAME = &quot;dev&quot;;</span><br><span class="line">    private static final String PASSWORD = &quot;dev&quot;;</span><br><span class="line"></span><br><span class="line">    private static GenericObjectPoolConfig config = new GenericObjectPoolConfig();</span><br><span class="line">    private static ObjectPool&lt;Connection&gt; pool;</span><br><span class="line"></span><br><span class="line">    @BeforeAll</span><br><span class="line">    public static void beforeAll() &#123;</span><br><span class="line">        config.setMaxIdle(4);</span><br><span class="line">        config.setMinIdle(4);</span><br><span class="line">        config.setMaxTotal(4);</span><br><span class="line">        config.setTestOnBorrow(true);</span><br><span class="line">//        config.setTestOnReturn(true);</span><br><span class="line">        pool = new GenericObjectPool(new MysqlJdbcFactory(URL, USERNAME, PASSWORD), config);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Test</span><br><span class="line">    @DisplayName(&quot;使用线程池测试query&quot;)</span><br><span class="line">    public void testQueryWithPool() &#123;</span><br><span class="line">        Connection conn = null;</span><br><span class="line">        PreparedStatement preparedStatement = null;</span><br><span class="line">        try &#123;</span><br><span class="line">            conn = pool.borrowObject();</span><br><span class="line">            preparedStatement = conn.prepareStatement(&quot;select id, username, password from t_user where id=1&quot;);</span><br><span class="line">            ResultSet resultSet = preparedStatement.executeQuery();</span><br><span class="line">            if (resultSet.next()) &#123;</span><br><span class="line">                log.info(&quot;name=&#123;&#125;, propvalue=&#123;&#125;, remark=&#123;&#125;&quot;, resultSet.getString(&quot;id&quot;), resultSet.getString(&quot;username&quot;), resultSet.getString(&quot;password&quot;));</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            log.error(e.getMessage(), e);</span><br><span class="line">        &#125; finally &#123;</span><br><span class="line">            if (null != preparedStatement) &#123;</span><br><span class="line">                try &#123;</span><br><span class="line">                    preparedStatement.close();</span><br><span class="line">                &#125; catch (SQLException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            if (null != conn) &#123;</span><br><span class="line">                try &#123;</span><br><span class="line">                    pool.returnObject(conn);</span><br><span class="line">                &#125; catch (Exception e) &#123;</span><br><span class="line">                    log.error(e.getMessage(), e);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="性能测试"><a href="#性能测试" class="headerlink" title="性能测试"></a>性能测试</h2><h3 id="未使用对象池"><a href="#未使用对象池" class="headerlink" title="未使用对象池"></a>未使用对象池</h3><ol>
+<li><p>首先写一个未使用连接池的方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">@Test</span><br><span class="line">@DisplayName(&quot;每次新创建连接测试&quot;)</span><br><span class="line">public void testQueryWithoutPool() throws Exception &#123;</span><br><span class="line">    Connection conn = null;</span><br><span class="line">    PreparedStatement preparedStatement = null;</span><br><span class="line">    MysqlJdbcFactory mysqlJdbcFactory = new MysqlJdbcFactory(URL, USERNAME, PASSWORD);</span><br><span class="line">    try &#123;</span><br><span class="line">        conn = mysqlJdbcFactory.create();</span><br><span class="line">        preparedStatement = conn.prepareStatement(&quot;select id, username, password from t_user where id=1&quot;);</span><br><span class="line">        ResultSet resultSet = preparedStatement.executeQuery();</span><br><span class="line">        if (resultSet.next()) &#123;</span><br><span class="line">            log.info(&quot;name=&#123;&#125;, propvalue=&#123;&#125;, remark=&#123;&#125;&quot;, resultSet.getString(&quot;id&quot;), resultSet.getString(&quot;username&quot;), resultSet.getString(&quot;password&quot;));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; catch (Exception e) &#123;</span><br><span class="line">        log.error(e.getMessage(), e);</span><br><span class="line">    &#125; finally &#123;</span><br><span class="line">        if (null != preparedStatement) &#123;</span><br><span class="line">            preparedStatement.close();</span><br><span class="line">        &#125;</span><br><span class="line">        if (null != conn) &#123;</span><br><span class="line">            conn.close();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>未使用连接池测试</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">运行结果：</span><br><span class="line">20:05:02.709 [main] INFO com.qiubyte.java.pool.common_pool2.mysql.JdbcPool2Test - name=1, propvalue=zhangsan, remark=01d7f40760960e7bd9443513f22ab9af</span><br></pre></td></tr></table></figure>
+
+</li>
+</ol>
+<h3 id="性能对比测试"><a href="#性能对比测试" class="headerlink" title="性能对比测试"></a>性能对比测试</h3><ol>
+<li><p>各查询10次，</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">@Test</span><br><span class="line">@DisplayName(&quot;使用连接池和不使用对比测试&quot;)</span><br><span class="line">public void testQueryCompare() throws Exception &#123;</span><br><span class="line">    int count = 10;</span><br><span class="line">    //不使用连接池</span><br><span class="line">    long startTime = System.currentTimeMillis();</span><br><span class="line">    for (int i = 0; i &lt; count; i++) &#123;</span><br><span class="line">        testQueryWithoutPool();</span><br><span class="line">    &#125;</span><br><span class="line">    log.info(&quot;query without pool duration = &#123;&#125;ms&quot;, System.currentTimeMillis() - startTime);</span><br><span class="line">    //使用连接池</span><br><span class="line">    startTime = System.currentTimeMillis();</span><br><span class="line">    for (int i = 0; i &lt; count; i++) &#123;</span><br><span class="line">        testQueryWithPool();</span><br><span class="line">    &#125;</span><br><span class="line">    log.info(&quot;query with pool duration = &#123;&#125;ms&quot;, System.currentTimeMillis() - startTime);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">运行结果：</span><br><span class="line">20:19:00.762 [main] INFO com.qiubyte.java.pool.common_pool2.mysql.JdbcPool2Test - query without pool duration = 219ms</span><br><span class="line">20:19:00.784 [main] INFO com.qiubyte.java.pool.common_pool2.mysql.JdbcPool2Test - query with pool duration = 19ms</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>结果比较明显，相差了10倍不止。</p>
+</li>
+</ol>
+<h2 id="common-pool2应用"><a href="#common-pool2应用" class="headerlink" title="common-pool2应用"></a>common-pool2应用</h2><ol>
+<li>使用common-pool2的对象池技术的一个完美例子就是redis的Java客户端JedisPool，可以研究研究。</li>
+<li>数据库连接池dbcp项目中是基于commons-pool实现的。</li>
+</ol>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>上面使用案例比较简单，但体现出来common-pool2可以快速的创建一个安全，强大，简单的对象池工具。如果有需要使用对象池化的操作，可以使用common-pool2快速实现。</p>
+<h2 id="相关链接"><a href="#相关链接" class="headerlink" title="相关链接"></a>相关链接</h2><ol>
+<li>Apache Commons Pool：<a href="http://commons.apache.org/proper/commons-pool/" target="_blank" rel="noopener">http://commons.apache.org/proper/commons-pool</a></li>
+<li>官网示例：<a href="http://commons.apache.org/proper/commons-pool/examples.html" target="_blank" rel="noopener">http://commons.apache.org/proper/commons-pool/examples.html</a></li>
+<li>Jedis github：<a href="https://github.com/xetorthio/jedis" target="_blank" rel="noopener">https://github.com/xetorthio/jedis</a></li>
+</ol>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://qiubyte.github.io/2019/10/31/2019/20191031-commons-pool2的简单使用/" title="commons-pool2的简单使用" target="_blank" rel="external">https://qiubyte.github.io/2019/10/31/2019/20191031-commons-pool2的简单使用/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.zh" target="_blank" rel="external">知识共享 署名-非商业性使用-禁止演绎 4.0 国际</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://qiubyte.github.io/" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://qiubyte.github.io/" target="_blank"><span class="text-dark">qiubyte</span><small class="ml-1x"></small></a></h3>
+        <div>纸上得来终觉浅，绝知此事须躬行</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2020/11/05/2020/20201105-MySQL blob导出sql文件乱码/" title="MySQL blob导出sql文件乱码"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2019/10/22/2019/20191022-ArrayList源码分析/" title="ArrayList源码分析"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+    <li class="toggle-toc">
+      <a class="toggle-btn" data-toggle="collapse" href="#collapseToc" aria-expanded="true" title="文章目录" role="button">
+        <span>[&nbsp;</span><span>文章目录</span>
+        <i class="text-collapsed icon icon-anchor"></i>
+        <i class="text-in icon icon-close"></i>
+        <span>]</span>
+      </a>
+    </li>
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="wechat,weibo,facebook" data-mobile-sites="wechat,weibo"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipayimg.jpg" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开支付宝扫一扫，即可进行扫码打赏哦</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpayimg.jpg" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开微信扫一扫，即可进行扫码打赏哦</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/qiubyte" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        &copy; 2022 qiubyte
+        
+        <div class="publishby">
+        	Theme by<a href="https://github.com/cofess/hexo-theme-pure" target="_blank"> cofess pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+<script src="/js/plugin.min.js"></script>
+<script src="/js/application.js"></script>
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: '',
+    appKey: '',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>

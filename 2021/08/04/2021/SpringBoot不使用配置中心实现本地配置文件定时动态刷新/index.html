@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform">
+  <meta http-equiv="Cache-Control" content="no-siteapp">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000">
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top">
+  
+  
+  <title>SpringBoot不使用配置中心实现本地配置文件定时动态刷新 | qiubyte&#39;s blog</title>
+  <meta name="description" content="由于还没有接入nacos配置中心，所以需要出一个版本更新本地动态刷新配置的功能，实现配置的动态更新。经过研究发现SpringCloud已经提供了手动接口/actuator/refresh方式刷新的功能，这里再进行处理下实现定时任务动态刷新配置。">
+<meta name="keywords" content="SpringBoot">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SpringBoot不使用配置中心实现本地配置文件定时动态刷新">
+<meta property="og:url" content="https://qiubyte.github.io/2021/08/04/2021/SpringBoot不使用配置中心实现本地配置文件定时动态刷新/index.html">
+<meta property="og:site_name" content="qiubyte">
+<meta property="og:description" content="由于还没有接入nacos配置中心，所以需要出一个版本更新本地动态刷新配置的功能，实现配置的动态更新。经过研究发现SpringCloud已经提供了手动接口/actuator/refresh方式刷新的功能，这里再进行处理下实现定时任务动态刷新配置。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-12-30T02:12:00.719Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="SpringBoot不使用配置中心实现本地配置文件定时动态刷新">
+<meta name="twitter:description" content="由于还没有接入nacos配置中心，所以需要出一个版本更新本地动态刷新配置的功能，实现配置的动态更新。经过研究发现SpringCloud已经提供了手动接口/actuator/refresh方式刷新的功能，这里再进行处理下实现定时任务动态刷新配置。">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://qiubyte.github.io/2021/08/04/2021/SpringBoot不使用配置中心实现本地配置文件定时动态刷新/index.html">
+  
+  
+    <link rel="icon" href="/favicon.jpg" type="image/x-icon">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+  
+  
+  
+</head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://qiubyte.github.io/" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">qiubyte</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md"></h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Hangzhou, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友情链接</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/qiubyte" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/Java/">Java</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Java框架/">Java框架</a><span class="category-list-count">1</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/Java框架/SpringBoot/">SpringBoot</a><span class="category-list-count">1</span></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/MySQL/">MySQL</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/SpringBoot/">SpringBoot</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/maven/">maven</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/software/">software</a><span class="category-list-count">2</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/software/mysql/">mysql</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/software/tomcat/">tomcat</a><span class="category-list-count">1</span></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/tools/">tools</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/ArrayList/">ArrayList</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/">Java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/List/">List</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MySQL/">MySQL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SpringBoot/">SpringBoot</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Undertow/">Undertow</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Windows/">Windows</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/apache/">apache</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/">mysql</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pool/">pool</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tomcat/">tomcat</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tools/">tools</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/ArrayList/" style="font-size: 13px;">ArrayList</a> <a href="/tags/Java/" style="font-size: 13px;">Java</a> <a href="/tags/List/" style="font-size: 13px;">List</a> <a href="/tags/MySQL/" style="font-size: 13px;">MySQL</a> <a href="/tags/SpringBoot/" style="font-size: 14px;">SpringBoot</a> <a href="/tags/Undertow/" style="font-size: 13px;">Undertow</a> <a href="/tags/Windows/" style="font-size: 13px;">Windows</a> <a href="/tags/apache/" style="font-size: 13px;">apache</a> <a href="/tags/mysql/" style="font-size: 13px;">mysql</a> <a href="/tags/pool/" style="font-size: 13px;">pool</a> <a href="/tags/tomcat/" style="font-size: 13px;">tomcat</a> <a href="/tags/tools/" style="font-size: 13px;">tools</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/12/">十二月 2022</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/11/">十一月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">十月 2019</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">九月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/01/">一月 2018</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+  </div>
+</aside>
+
+  
+  
+<aside class="sidebar sidebar-toc collapse in" id="collapseToc" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    <nav id="toc" class="article-toc">
+      <h3 class="toc-title">文章目录</h3>
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#使用版本"><span class="toc-number">1.</span> <span class="toc-text">使用版本</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#首先集成SpringCloud中的refresh刷新功能"><span class="toc-number">2.</span> <span class="toc-text">首先集成SpringCloud中的refresh刷新功能</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#上面已经添加了所有的依赖包。"><span class="toc-number">2.1.</span> <span class="toc-text">上面已经添加了所有的依赖包。</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#yml配置"><span class="toc-number">2.2.</span> <span class="toc-text">yml配置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#RefreshScope注解"><span class="toc-number">2.3.</span> <span class="toc-text">@RefreshScope注解</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#添加controller"><span class="toc-number">2.4.</span> <span class="toc-text">添加controller</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#刷新步骤和现象"><span class="toc-number">2.5.</span> <span class="toc-text">刷新步骤和现象</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#注意问题"><span class="toc-number">2.6.</span> <span class="toc-text">注意问题</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#分析refresh的实现"><span class="toc-number">3.</span> <span class="toc-text">分析refresh的实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#找到-actuator-refresh接口的实现类"><span class="toc-number">3.1.</span> <span class="toc-text">找到/actuator/refresh接口的实现类</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#集成schedule任务定时刷新"><span class="toc-number">4.</span> <span class="toc-text">集成schedule任务定时刷新</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#开启schedule"><span class="toc-number">4.1.</span> <span class="toc-text">开启schedule</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#定时刷新配置任务代码"><span class="toc-number">4.2.</span> <span class="toc-text">定时刷新配置任务代码</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#刷新步骤和现象-1"><span class="toc-number">4.3.</span> <span class="toc-text">刷新步骤和现象</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">5.</span> <span class="toc-text">总结</span></a></li></ol>
+    </nav>
+  </div>
+</aside>
+
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-2021/SpringBoot不使用配置中心实现本地配置文件定时动态刷新" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      SpringBoot不使用配置中心实现本地配置文件定时动态刷新
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2021/08/04/2021/SpringBoot不使用配置中心实现本地配置文件定时动态刷新/" class="article-date">
+	  <time datetime="2021-08-04T12:05:00.000Z" itemprop="datePublished">2021-08-04</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/SpringBoot/">SpringBoot</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link" href="/tags/SpringBoot/">SpringBoot</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2021/08/04/2021/SpringBoot不使用配置中心实现本地配置文件定时动态刷新/#comments" class="article-comment-link">评论</a></span>
+        
+	
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计: 1k(字)</span>
+	
+	
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长: 4(分)</span>
+	
+
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <p>由于还没有接入nacos配置中心，所以需要出一个版本更新本地动态刷新配置的功能，实现配置的动态更新。经过研究发现SpringCloud已经提供了手动接口/actuator/refresh方式刷新的功能，这里再进行处理下实现定时任务动态刷新配置。</p>
+<a id="more"></a>
+
+<h2 id="使用版本"><a href="#使用版本" class="headerlink" title="使用版本"></a>使用版本</h2><p>SpringBoot版本2.3.10.RELEASE</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&lt;parent&gt;</span><br><span class="line">    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;spring-boot-starter-parent&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;2.3.10.RELEASE&lt;/version&gt;</span><br><span class="line">    &lt;relativePath/&gt;</span><br><span class="line">&lt;/parent&gt;</span><br><span class="line"></span><br><span class="line">&lt;dependency&gt;</span><br><span class="line">    &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;</span><br><span class="line">    &lt;artifactId&gt;spring-cloud-starter-config&lt;/artifactId&gt;</span><br><span class="line">    &lt;version&gt;2.2.8.RELEASE&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="首先集成SpringCloud中的refresh刷新功能"><a href="#首先集成SpringCloud中的refresh刷新功能" class="headerlink" title="首先集成SpringCloud中的refresh刷新功能"></a>首先集成SpringCloud中的refresh刷新功能</h2><h3 id="上面已经添加了所有的依赖包。"><a href="#上面已经添加了所有的依赖包。" class="headerlink" title="上面已经添加了所有的依赖包。"></a>上面已经添加了所有的依赖包。</h3><p>依赖spring-cloud-starter-config来实现配置更新，所以必须要有</p>
+<h3 id="yml配置"><a href="#yml配置" class="headerlink" title="yml配置"></a>yml配置</h3><p>application.yml配置文件添加配置test.version, 必须要添加endpoints refresh对外暴露接口</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">server:</span><br><span class="line">  port: 8011</span><br><span class="line">  undertow:</span><br><span class="line">    threads:</span><br><span class="line">      io: 10</span><br><span class="line">      worker: 40</span><br><span class="line">management:</span><br><span class="line">  endpoints:</span><br><span class="line">    web:</span><br><span class="line">      exposure:</span><br><span class="line">        include: health,info,prometheus,refresh</span><br><span class="line">test:</span><br><span class="line">  version: 1.0.0</span><br></pre></td></tr></table></figure>
+
+<h3 id="RefreshScope注解"><a href="#RefreshScope注解" class="headerlink" title="@RefreshScope注解"></a>@RefreshScope注解</h3><p>在配置获取参数的地方加上@RefreshScope注解，必须要加这个注解才能够实现配置刷新。(@Data是Lombok注解)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">@Data</span><br><span class="line">@RefreshScope</span><br><span class="line">@Component(&quot;propertyConfig&quot;)</span><br><span class="line">public class PropertyConfig &#123;</span><br><span class="line"></span><br><span class="line">    @Value(&quot;$&#123;test.version:false&#125;&quot;)</span><br><span class="line">    private String testVersion;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="添加controller"><a href="#添加controller" class="headerlink" title="添加controller"></a>添加controller</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">@Slf4j</span><br><span class="line">@RestController</span><br><span class="line">public class VersionController &#123;</span><br><span class="line"></span><br><span class="line">    @Resource</span><br><span class="line">    private PropertyConfig propertyConfig;</span><br><span class="line"></span><br><span class="line">    @RequestMapping(value = &#123;&quot;/test/version&quot;&#125;, method = RequestMethod.GET)</span><br><span class="line">    public String testVersion() &#123;</span><br><span class="line">        return propertyConfig.getTestVersion();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="刷新步骤和现象"><a href="#刷新步骤和现象" class="headerlink" title="刷新步骤和现象"></a>刷新步骤和现象</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">1. 浏览器或着postman调用 http://localhost:8011/test/version接口。</span><br><span class="line">返回结果：1.0.0</span><br><span class="line"></span><br><span class="line">2. application.yml配置文件修改</span><br><span class="line">test:</span><br><span class="line">  version: 2.0.0</span><br><span class="line"></span><br><span class="line">3. post方式 调用 http://localhost:8011/actuator/refresh， 注意这里一定是post。</span><br><span class="line">请求会返回已经被刷新的配置key列表：</span><br><span class="line">[</span><br><span class="line">    &quot;test.version&quot;</span><br><span class="line">]</span><br><span class="line">  </span><br><span class="line">4. 重复1的逻辑，调用 http://localhost:8011/test/version接口。</span><br><span class="line">返回结果：2.0.0</span><br></pre></td></tr></table></figure>
+
+<h3 id="注意问题"><a href="#注意问题" class="headerlink" title="注意问题"></a>注意问题</h3><ol>
+<li><code>http://localhost:8011/actuator/refresh</code> 接口必须要用post方式调用。</li>
+<li>比如在idea中运行，<strong>修改的配置文件一定是编译目录下的yml配置文件</strong>，一般在idea中是橘黄色标识 target/classes下的application.yml</li>
+</ol>
+<h2 id="分析refresh的实现"><a href="#分析refresh的实现" class="headerlink" title="分析refresh的实现"></a>分析refresh的实现</h2><h3 id="找到-actuator-refresh接口的实现类"><a href="#找到-actuator-refresh接口的实现类" class="headerlink" title="找到/actuator/refresh接口的实现类"></a>找到<code>/actuator/refresh</code>接口的实现类</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">@Endpoint(id = &quot;refresh&quot;)</span><br><span class="line">public class RefreshEndpoint &#123;</span><br><span class="line"></span><br><span class="line">	private ContextRefresher contextRefresher;</span><br><span class="line"></span><br><span class="line">	public RefreshEndpoint(ContextRefresher contextRefresher) &#123;</span><br><span class="line">		this.contextRefresher = contextRefresher;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	@WriteOperation</span><br><span class="line">	public Collection&lt;String&gt; refresh() &#123;</span><br><span class="line">		Set&lt;String&gt; keys = this.contextRefresher.refresh();</span><br><span class="line">		return keys;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>发现就是使用 contextRefresher.refresh() 方法实现刷新的。所以我们可以利用这个方法来自己控制什么时候动态刷新配置。</li>
+<li>感兴趣可以深入看一下源码内部实现。</li>
+</ol>
+<h2 id="集成schedule任务定时刷新"><a href="#集成schedule任务定时刷新" class="headerlink" title="集成schedule任务定时刷新"></a>集成schedule任务定时刷新</h2><h3 id="开启schedule"><a href="#开启schedule" class="headerlink" title="开启schedule"></a>开启schedule</h3><p>Application上加上@EnableScheduling注解</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">@EnableScheduling</span><br><span class="line">@SpringBootApplication</span><br><span class="line">public class Application &#123;</span><br><span class="line">    // ......</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="定时刷新配置任务代码"><a href="#定时刷新配置任务代码" class="headerlink" title="定时刷新配置任务代码"></a>定时刷新配置任务代码</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line">import org.slf4j.Logger;</span><br><span class="line">import org.slf4j.LoggerFactory;</span><br><span class="line">import org.springframework.beans.factory.annotation.Value;</span><br><span class="line">import org.springframework.boot.actuate.endpoint.annotation.WriteOperation;</span><br><span class="line">import org.springframework.cloud.context.config.annotation.RefreshScope;</span><br><span class="line">import org.springframework.cloud.context.refresh.ContextRefresher;</span><br><span class="line">import org.springframework.scheduling.annotation.Scheduled;</span><br><span class="line">import org.springframework.stereotype.Component;</span><br><span class="line"></span><br><span class="line">import javax.annotation.Resource;</span><br><span class="line">import java.io.File;</span><br><span class="line">import java.util.Set;</span><br><span class="line"></span><br><span class="line">@RefreshScope</span><br><span class="line">@Component</span><br><span class="line">public class PropertiesRefreshTask &#123;</span><br><span class="line">    private static final Logger log = LoggerFactory.getLogger(PropertiesRefreshTask.class);</span><br><span class="line">    /**</span><br><span class="line">     * 文件更新时间</span><br><span class="line">     */</span><br><span class="line">    private long fileUpdateTime = 0L;</span><br><span class="line">    /**</span><br><span class="line">     * 这里是配置文件的目录</span><br><span class="line">     */</span><br><span class="line">    @Value(&quot;$&#123;yml.path:/usr/local/lark&#125;&quot;)</span><br><span class="line">    private String ymlPath;</span><br><span class="line"></span><br><span class="line">    @Resource</span><br><span class="line">    private ContextRefresher contextRefresher;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 30s检查一次</span><br><span class="line">     */</span><br><span class="line">    @WriteOperation</span><br><span class="line">    @Scheduled(fixedDelay = 30000L)</span><br><span class="line">    public void propertiesRefreshTask() &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            File file = new File(ymlPath + &quot;/application.yml&quot;);</span><br><span class="line">            // 检测文件是否存在</span><br><span class="line">            if (!file.exists()) &#123;</span><br><span class="line">                log.warn(&quot;application.yml not exist&quot;);</span><br><span class="line">                return;</span><br><span class="line">            &#125;</span><br><span class="line">            long lastModifiedTime = file.lastModified();</span><br><span class="line">            // 文件更新时间和记录对比</span><br><span class="line">            if (fileUpdateTime == 0 || fileUpdateTime &gt;= lastModifiedTime) &#123;</span><br><span class="line">                fileUpdateTime = lastModifiedTime;</span><br><span class="line">                return;</span><br><span class="line">            &#125;</span><br><span class="line">            Set&lt;String&gt; keys = contextRefresher.refresh();</span><br><span class="line">            log.info(&quot;propertiesRefresh keys=&#123;&#125;&quot;, keys);</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            log.error(&quot;propertiesRefresh exception=&#123;&#125;&quot;, e.getMessage(), e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="刷新步骤和现象-1"><a href="#刷新步骤和现象-1" class="headerlink" title="刷新步骤和现象"></a>刷新步骤和现象</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">1. 浏览器或着postman调用 http://localhost:8011/test/version接口</span><br><span class="line">返回结果：1.0.0</span><br><span class="line"></span><br><span class="line">2. application.yml配置文件修改</span><br><span class="line">test:</span><br><span class="line">  version: 2.0.0</span><br><span class="line"></span><br><span class="line">3. 等待30s时间</span><br><span class="line">  </span><br><span class="line">4. 重复1的逻辑，调用 http://localhost:8011/test/version接口</span><br><span class="line">返回结果：2.0.0</span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ol>
+<li>这个是没有接入配置中心导致这么使用的原因，还是建议使用配置中心来实现配置动态加载。</li>
+<li>后续会从源码角度分析下SrpingCloud的refresh的实现逻辑及作用范围。</li>
+</ol>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://qiubyte.github.io/2021/08/04/2021/SpringBoot不使用配置中心实现本地配置文件定时动态刷新/" title="SpringBoot不使用配置中心实现本地配置文件定时动态刷新" target="_blank" rel="external">https://qiubyte.github.io/2021/08/04/2021/SpringBoot不使用配置中心实现本地配置文件定时动态刷新/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.zh" target="_blank" rel="external">知识共享 署名-非商业性使用-禁止演绎 4.0 国际</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://qiubyte.github.io/" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://qiubyte.github.io/" target="_blank"><span class="text-dark">qiubyte</span><small class="ml-1x"></small></a></h3>
+        <div>纸上得来终觉浅，绝知此事须躬行</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2022/12/07/2022/maven多模块项目指定module打包/" title="maven多模块项目指定module打包"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2021/08/03/2021/SpringBoot 给Controller RequestMapping添加统一路径前缀/" title="SpringBoot 给Controller RequestMapping添加统一路径前缀"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+    <li class="toggle-toc">
+      <a class="toggle-btn" data-toggle="collapse" href="#collapseToc" aria-expanded="true" title="文章目录" role="button">
+        <span>[&nbsp;</span><span>文章目录</span>
+        <i class="text-collapsed icon icon-anchor"></i>
+        <i class="text-in icon icon-close"></i>
+        <span>]</span>
+      </a>
+    </li>
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="wechat,weibo,facebook" data-mobile-sites="wechat,weibo"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipayimg.jpg" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开支付宝扫一扫，即可进行扫码打赏哦</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpayimg.jpg" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开微信扫一扫，即可进行扫码打赏哦</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/qiubyte" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        &copy; 2022 qiubyte
+        
+        <div class="publishby">
+        	Theme by<a href="https://github.com/cofess/hexo-theme-pure" target="_blank"> cofess pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+<script src="/js/plugin.min.js"></script>
+<script src="/js/application.js"></script>
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: '',
+    appKey: '',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>

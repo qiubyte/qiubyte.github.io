@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform">
+  <meta http-equiv="Cache-Control" content="no-siteapp">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000">
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top">
+  
+  
+  <title>ArrayList源码分析 | qiubyte&#39;s blog</title>
+  <meta name="description" content="ArrayList的列表对象实质上是存储在一个引用型数组里的。源码基于jdk1.8版本。">
+<meta name="keywords" content="List,ArrayList">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ArrayList源码分析">
+<meta property="og:url" content="https://qiubyte.github.io/2019/10/22/2019/20191022-ArrayList源码分析/index.html">
+<meta property="og:site_name" content="qiubyte">
+<meta property="og:description" content="ArrayList的列表对象实质上是存储在一个引用型数组里的。源码基于jdk1.8版本。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-12-30T02:12:00.717Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="ArrayList源码分析">
+<meta name="twitter:description" content="ArrayList的列表对象实质上是存储在一个引用型数组里的。源码基于jdk1.8版本。">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://qiubyte.github.io/2019/10/22/2019/20191022-ArrayList源码分析/index.html">
+  
+  
+    <link rel="icon" href="/favicon.jpg" type="image/x-icon">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+  
+  
+  
+</head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://qiubyte.github.io/" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">qiubyte</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md"></h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Hangzhou, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友情链接</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/qiubyte" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/Java/">Java</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Java框架/">Java框架</a><span class="category-list-count">1</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/Java框架/SpringBoot/">SpringBoot</a><span class="category-list-count">1</span></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/MySQL/">MySQL</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/SpringBoot/">SpringBoot</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/maven/">maven</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/software/">software</a><span class="category-list-count">2</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/software/mysql/">mysql</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/software/tomcat/">tomcat</a><span class="category-list-count">1</span></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/tools/">tools</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/ArrayList/">ArrayList</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/">Java</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/List/">List</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MySQL/">MySQL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SpringBoot/">SpringBoot</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Undertow/">Undertow</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Windows/">Windows</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/apache/">apache</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/">mysql</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pool/">pool</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tomcat/">tomcat</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tools/">tools</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/ArrayList/" style="font-size: 13px;">ArrayList</a> <a href="/tags/Java/" style="font-size: 13px;">Java</a> <a href="/tags/List/" style="font-size: 13px;">List</a> <a href="/tags/MySQL/" style="font-size: 13px;">MySQL</a> <a href="/tags/SpringBoot/" style="font-size: 14px;">SpringBoot</a> <a href="/tags/Undertow/" style="font-size: 13px;">Undertow</a> <a href="/tags/Windows/" style="font-size: 13px;">Windows</a> <a href="/tags/apache/" style="font-size: 13px;">apache</a> <a href="/tags/mysql/" style="font-size: 13px;">mysql</a> <a href="/tags/pool/" style="font-size: 13px;">pool</a> <a href="/tags/tomcat/" style="font-size: 13px;">tomcat</a> <a href="/tags/tools/" style="font-size: 13px;">tools</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/12/">十二月 2022</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/08/">八月 2021</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/06/">六月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/11/">十一月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">十月 2019</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">九月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/01/">一月 2018</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+  </div>
+</aside>
+
+  
+  
+<aside class="sidebar sidebar-toc collapse in" id="collapseToc" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    <nav id="toc" class="article-toc">
+      <h3 class="toc-title">文章目录</h3>
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#ArrayList数据结构"><span class="toc-number">1.</span> <span class="toc-text">ArrayList数据结构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ArrayList的构造函数"><span class="toc-number">2.</span> <span class="toc-text">ArrayList的构造函数</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#无参数构造函数"><span class="toc-number">2.1.</span> <span class="toc-text">无参数构造函数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#带int类型的构造函数"><span class="toc-number">2.2.</span> <span class="toc-text">带int类型的构造函数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#带Collection的构造函数"><span class="toc-number">2.3.</span> <span class="toc-text">带Collection的构造函数</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ArrayList的扩容逻辑"><span class="toc-number">3.</span> <span class="toc-text">ArrayList的扩容逻辑</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#add-E-e-为例讲解扩容"><span class="toc-number">3.1.</span> <span class="toc-text">add(E e)为例讲解扩容</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#扩容逻辑"><span class="toc-number">3.2.</span> <span class="toc-text">扩容逻辑</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#最大容量"><span class="toc-number">3.3.</span> <span class="toc-text">最大容量</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#remove删除后容量变化"><span class="toc-number">3.4.</span> <span class="toc-text">remove删除后容量变化</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ArrayList-遍历"><span class="toc-number">4.</span> <span class="toc-text">ArrayList 遍历</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#for遍历方式"><span class="toc-number">4.1.</span> <span class="toc-text">for遍历方式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#foreach遍历方式"><span class="toc-number">4.2.</span> <span class="toc-text">foreach遍历方式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#迭代器遍历方式"><span class="toc-number">4.3.</span> <span class="toc-text">迭代器遍历方式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#性能对比"><span class="toc-number">4.4.</span> <span class="toc-text">性能对比</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ArryList相关问题"><span class="toc-number">5.</span> <span class="toc-text">ArryList相关问题</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ArrayList异常抛出常见场景"><span class="toc-number">5.1.</span> <span class="toc-text">ArrayList异常抛出常见场景</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ArrayList安全的remove操作"><span class="toc-number">5.2.</span> <span class="toc-text">ArrayList安全的remove操作</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ArrayList是非线程安全"><span class="toc-number">5.3.</span> <span class="toc-text">ArrayList是非线程安全</span></a></li></ol></li></ol>
+    </nav>
+  </div>
+</aside>
+
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-2019/20191022-ArrayList源码分析" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      ArrayList源码分析
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2019/10/22/2019/20191022-ArrayList源码分析/" class="article-date">
+	  <time datetime="2019-10-22T12:00:00.000Z" itemprop="datePublished">2019-10-22</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/Java/">Java</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link" href="/tags/ArrayList/">ArrayList</a>, <a class="article-tag-link" href="/tags/List/">List</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2019/10/22/2019/20191022-ArrayList源码分析/#comments" class="article-comment-link">评论</a></span>
+        
+	
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计: 3.3k(字)</span>
+	
+	
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长: 15(分)</span>
+	
+
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <p>ArrayList的列表对象实质上是存储在一个引用型数组里的。<br>源码基于jdk1.8版本。</p>
+<a id="more"></a>
+
+<h2 id="ArrayList数据结构"><a href="#ArrayList数据结构" class="headerlink" title="ArrayList数据结构"></a>ArrayList数据结构</h2><p>正如上所说，ArrayList内部采用数组数据结构存储，首先来看下一下源码.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Default initial capacity.</span><br><span class="line"> */</span><br><span class="line">private static final int DEFAULT_CAPACITY = 10;</span><br><span class="line">/**</span><br><span class="line"> * Shared empty array instance used for empty instances.</span><br><span class="line"> */</span><br><span class="line">private static final Object[] EMPTY_ELEMENTDATA = &#123;&#125;;</span><br><span class="line">/**</span><br><span class="line"> * Shared empty array instance used for default sized empty instances. We</span><br><span class="line"> * distinguish this from EMPTY_ELEMENTDATA to know how much to inflate when</span><br><span class="line"> * first element is added.</span><br><span class="line"> */</span><br><span class="line">private static final Object[] DEFAULTCAPACITY_EMPTY_ELEMENTDATA = &#123;&#125;;</span><br><span class="line">/**</span><br><span class="line"> * The array buffer into which the elements of the ArrayList are stored.</span><br><span class="line"> * The capacity of the ArrayList is the length of this array buffer. Any</span><br><span class="line"> * empty ArrayList with elementData == DEFAULTCAPACITY_EMPTY_ELEMENTDATA</span><br><span class="line"> * will be expanded to DEFAULT_CAPACITY when the first element is added.</span><br><span class="line"> */</span><br><span class="line">transient Object[] elementData; // non-private to simplify nested class access</span><br><span class="line">/**</span><br><span class="line"> * The size of the ArrayList (the number of elements it contains).</span><br><span class="line"> *</span><br><span class="line"> * @serial</span><br><span class="line"> */</span><br><span class="line">private int size;</span><br></pre></td></tr></table></figure>
+
+<ol>
+<li><code>DEFAULT_CAPACITY</code>:默认初始化容量为10，但使用无参数构造方法创建ArrayList对象时并不会直接创建默认初始化容量的存储空间，这个应该时jdk的优化，下面会展开说明。</li>
+<li><code>EMPTY_ELEMENTDATA</code>:空数组对象。</li>
+<li><code>DEFAULTCAPACITY_EMPTY_ELEMENTDATA</code>:空对象，如果使用无参数构造函数创建，则默认对象内容默认是该数组对象。</li>
+<li><code>elementData</code>:当前数据对象存放地方，当前对象不参与序列化 。初始化时为<code>DEFAULTCAPACITY_EMPTY_ELEMENTDATA</code>空对象，第一次add()的时候初始容量10。</li>
+<li><code>size</code>:存储当前数组实际存储数据长度。</li>
+</ol>
+<h2 id="ArrayList的构造函数"><a href="#ArrayList的构造函数" class="headerlink" title="ArrayList的构造函数"></a>ArrayList的构造函数</h2><h3 id="无参数构造函数"><a href="#无参数构造函数" class="headerlink" title="无参数构造函数"></a>无参数构造函数</h3><ol>
+<li><p>无参数构造函数。创建的ArrayList对象中的<code>elementData</code>为<code>DEFAULTCAPACITY_EMPTY_ELEMENTDATA</code>,初始化容量为0,size为0,当进行第一次add的时候，<code>elementData</code>将会变成默认的长度：10.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Constructs an empty list with an initial capacity of ten.</span><br><span class="line"> */</span><br><span class="line">public ArrayList() &#123;</span><br><span class="line">    this.elementData = DEFAULTCAPACITY_EMPTY_ELEMENTDATA;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>我们通过反射获取<code>elementData</code>参数，输出无参数ArrayList容量。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">@Test</span><br><span class="line">public void testEmptyArrayListCapacity() throws NoSuchFieldException, IllegalAccessException &#123;</span><br><span class="line">    List&lt;Integer&gt; list = new ArrayList&lt;&gt;();</span><br><span class="line">    Field field = ArrayList.class.getDeclaredField(&quot;elementData&quot;);</span><br><span class="line">    field.setAccessible(true);</span><br><span class="line">    Object[] objs = (Object[]) field.get(list);</span><br><span class="line">    System.out.println(&quot;capacity=&quot; + objs.length);</span><br><span class="line">    System.out.println(&quot;size=&quot; + list.size());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">输出结果:</span><br><span class="line">capacity=0</span><br><span class="line">size=0</span><br></pre></td></tr></table></figure>
+
+</li>
+</ol>
+<h3 id="带int类型的构造函数"><a href="#带int类型的构造函数" class="headerlink" title="带int类型的构造函数"></a>带int类型的构造函数</h3><ol>
+<li><p>如果传入参数，则代表指定ArrayList的初始数组长度，传入参数如果是大于等于0，则使用用户的参数初始化，如果用户传入的参数小于0，则抛出异常，构造方法如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Constructs an empty list with the specified initial capacity.</span><br><span class="line"> *</span><br><span class="line"> * @param  initialCapacity  the initial capacity of the list</span><br><span class="line"> * @throws IllegalArgumentException if the specified initial capacity</span><br><span class="line"> *         is negative</span><br><span class="line"> */</span><br><span class="line">public ArrayList(int initialCapacity) &#123;</span><br><span class="line">    if (initialCapacity &gt; 0) &#123;</span><br><span class="line">        this.elementData = new Object[initialCapacity];</span><br><span class="line">    &#125; else if (initialCapacity == 0) &#123;</span><br><span class="line">        this.elementData = EMPTY_ELEMENTDATA;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        throw new IllegalArgumentException(&quot;Illegal Capacity: &quot;+</span><br><span class="line">                                           initialCapacity);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>我们通过反射获取<code>elementData</code>参数，输出带初始化容量参数ArrayList容量。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">@Test</span><br><span class="line">@DisplayName(&quot;查看初始容量参数ArrayList的容量和大小&quot;)</span><br><span class="line">public void testInitArrayListCapacity() throws NoSuchFieldException, IllegalAccessException &#123;</span><br><span class="line">    List&lt;Integer&gt; list = new ArrayList&lt;&gt;(5);</span><br><span class="line">    Field field = ArrayList.class.getDeclaredField(&quot;elementData&quot;);</span><br><span class="line">    field.setAccessible(true);</span><br><span class="line">    Object[] objs = (Object[]) field.get(list);</span><br><span class="line">    System.out.println(&quot;capacity=&quot; + objs.length);</span><br><span class="line">    System.out.println(&quot;size=&quot; + list.size());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">输出结果:</span><br><span class="line">capacity=5</span><br><span class="line">size=0</span><br></pre></td></tr></table></figure>
+
+</li>
+</ol>
+<h3 id="带Collection的构造函数"><a href="#带Collection的构造函数" class="headerlink" title="带Collection的构造函数"></a>带Collection的构造函数</h3><ol>
+<li>将collection对象转换成数组，然后将数组的地址的赋给<code>elementData</code>。更新size值为传入Collection对象<code>elementData</code>的size。</li>
+<li>如果size==0值,直接将空对象<code>EMPTY_ELEMENTDATA</code>的地址赋给<code>elementData</code></li>
+<li>如果size!=0，则执行<code>Arrays.copy</code>方法，把collection对象的内容copy到<code>elementData</code>中。<code>Arrays.copyOf</code>使用<code>System.arraycopy</code>实现。<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Constructs a list containing the elements of the specified</span><br><span class="line"> * collection, in the order they are returned by the collection&apos;s</span><br><span class="line"> * iterator.</span><br><span class="line"> *</span><br><span class="line"> * @param c the collection whose elements are to be placed into this list</span><br><span class="line"> * @throws NullPointerException if the specified collection is null</span><br><span class="line"> */</span><br><span class="line">public ArrayList(Collection&lt;? extends E&gt; c) &#123;</span><br><span class="line">    elementData = c.toArray();</span><br><span class="line">    if ((size = elementData.length) != 0) &#123;</span><br><span class="line">        // c.toArray might (incorrectly) not return Object[] (see 6260652)</span><br><span class="line">        if (elementData.getClass() != Object[].class)</span><br><span class="line">            elementData = Arrays.copyOf(elementData, size, Object[].class);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        // replace with empty array.</span><br><span class="line">        this.elementData = EMPTY_ELEMENTDATA;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public static &lt;T,U&gt; T[] copyOf(U[] original, int newLength, Class&lt;? extends T[]&gt; newType) &#123;</span><br><span class="line">    @SuppressWarnings(&quot;unchecked&quot;)</span><br><span class="line">    T[] copy = ((Object)newType == (Object)Object[].class)</span><br><span class="line">        ? (T[]) new Object[newLength]</span><br><span class="line">        : (T[]) Array.newInstance(newType.getComponentType(), newLength);</span><br><span class="line">    System.arraycopy(original, 0, copy, 0,</span><br><span class="line">                     Math.min(original.length, newLength));</span><br><span class="line">    return copy;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+</li>
+</ol>
+<h2 id="ArrayList的扩容逻辑"><a href="#ArrayList的扩容逻辑" class="headerlink" title="ArrayList的扩容逻辑"></a>ArrayList的扩容逻辑</h2><h3 id="add-E-e-为例讲解扩容"><a href="#add-E-e-为例讲解扩容" class="headerlink" title="add(E e)为例讲解扩容"></a>add(E e)为例讲解扩容</h3><ol>
+<li>以<code>add(E e)</code>方法来看ArrayList时如何进行扩容的。首先看<code>add(E e)</code>源码，添加了注释。<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Appends the specified element to the end of this list.</span><br><span class="line"> *</span><br><span class="line"> * @param e element to be appended to this list</span><br><span class="line"> * @return &lt;tt&gt;true&lt;/tt&gt; (as specified by &#123;@link Collection#add&#125;)</span><br><span class="line"> */</span><br><span class="line">public boolean add(E e) &#123;</span><br><span class="line">    //确认当前当前size+1和容量对比，确认是否需要扩容。</span><br><span class="line">    ensureCapacityInternal(size + 1);</span><br><span class="line">    //因为数组下标是从0开始，最后将e对象放在elementData的size的位置。</span><br><span class="line">    //先运算后++，所以此段代码理解为elementData[size] = e; size++;</span><br><span class="line">    elementData[size++] = e;</span><br><span class="line">    return true;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void ensureCapacityInternal(int minCapacity) &#123;</span><br><span class="line">    ensureExplicitCapacity(calculateCapacity(elementData, minCapacity));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">//计算容量</span><br><span class="line">private static int calculateCapacity(Object[] elementData, int minCapacity) &#123;</span><br><span class="line">    //无参数的构造函数初始化elementData会为DEFAULTCAPACITY_EMPTY_ELEMENTDATA,所以这里会有此判断</span><br><span class="line">    if (elementData == DEFAULTCAPACITY_EMPTY_ELEMENTDATA) &#123;</span><br><span class="line">        //取DEFAULT_CAPACITY和minCapacity的最大值。</span><br><span class="line">        //所以如果是个空列表，第一次add操作会扩容为默认容量10</span><br><span class="line">        return Math.max(DEFAULT_CAPACITY, minCapacity);</span><br><span class="line">    &#125;</span><br><span class="line">    return minCapacity;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void ensureExplicitCapacity(int minCapacity) &#123;</span><br><span class="line">    modCount++;</span><br><span class="line">    // overflow-conscious code</span><br><span class="line">    //计算出来需要的容量 &gt; 当前elementData容量会进行扩容</span><br><span class="line">    if (minCapacity - elementData.length &gt; 0)</span><br><span class="line">        grow(minCapacity);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Increases the capacity to ensure that it can hold at least the</span><br><span class="line"> * number of elements specified by the minimum capacity argument.</span><br><span class="line"> *</span><br><span class="line"> * @param minCapacity the desired minimum capacity</span><br><span class="line"> */</span><br><span class="line">private void grow(int minCapacity) &#123;</span><br><span class="line">    // overflow-conscious code</span><br><span class="line">    //oldCapacity原始容量</span><br><span class="line">    int oldCapacity = elementData.length;</span><br><span class="line">    //newCapacity新扩充容量，即扩充后的容量 = oldCapacity + （oldCapacity*0.5）向下取整。例如容量为oldCapacity=10，newCapacity=10+5=15</span><br><span class="line">    int newCapacity = oldCapacity + (oldCapacity &gt;&gt; 1);</span><br><span class="line">    //如果newCapacity扩容为原来的1.5倍还是比minCapacity小，则使用minCapacity的容量</span><br><span class="line">    if (newCapacity - minCapacity &lt; 0)</span><br><span class="line">        newCapacity = minCapacity;</span><br><span class="line">    //MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8, 需要分配的容量比MAX_ARRAY_SIZE还要大，会调用hugeCapacity方法分配容量</span><br><span class="line">    if (newCapacity - MAX_ARRAY_SIZE &gt; 0)</span><br><span class="line">        newCapacity = hugeCapacity(minCapacity);</span><br><span class="line">    // minCapacity is usually close to size, so this is a win:</span><br><span class="line">    // 将老数组拷贝到新容量的数组中</span><br><span class="line">    elementData = Arrays.copyOf(elementData, newCapacity);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private static int hugeCapacity(int minCapacity) &#123;</span><br><span class="line">    //溢出了，抛错</span><br><span class="line">    if (minCapacity &lt; 0) // overflow</span><br><span class="line">        throw new OutOfMemoryError();</span><br><span class="line">    //没有达到MAX_ARRAY_SIZE则分配MAX_ARRAY_SIZE的容量，&gt; MAX_ARRAY_SIZE则分配Integer.MAX_VALUE容量</span><br><span class="line">    return (minCapacity &gt; MAX_ARRAY_SIZE) ?</span><br><span class="line">        Integer.MAX_VALUE :</span><br><span class="line">        MAX_ARRAY_SIZE;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public static &lt;T&gt; T[] copyOf(T[] original, int newLength) &#123;</span><br><span class="line">    return (T[]) copyOf(original, newLength, original.getClass());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public static &lt;T,U&gt; T[] copyOf(U[] original, int newLength, Class&lt;? extends T[]&gt; newType) &#123;</span><br><span class="line">    @SuppressWarnings(&quot;unchecked&quot;)</span><br><span class="line">    T[] copy = ((Object)newType == (Object)Object[].class)</span><br><span class="line">        ? (T[]) new Object[newLength]</span><br><span class="line">        : (T[]) Array.newInstance(newType.getComponentType(), newLength);</span><br><span class="line">    //使用System.arraycopy方法复制，native方法速度快。</span><br><span class="line">    System.arraycopy(original, 0, copy, 0,</span><br><span class="line">                     Math.min(original.length, newLength));</span><br><span class="line">    return copy;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+</li>
+</ol>
+<h3 id="扩容逻辑"><a href="#扩容逻辑" class="headerlink" title="扩容逻辑"></a>扩容逻辑</h3><p>从源码看到一共有五种扩容逻辑。</p>
+<ol>
+<li><code>elementData</code> == <code>DEFAULTCAPACITY_EMPTY_ELEMENTDATA</code>并且当前add的长度&lt;=10的时候，容量由0扩容为10</li>
+<li>正常情况下新的容量为原来的1.5倍, 扩容后的<code>newCapacity &gt;= 原始容量+当前add添加的minCapacity</code>,新容量为<code>newCapacity = oldCapacity + (int)(oldCapacity*0.5)</code>。</li>
+<li>扩容1.5倍之后的<code>newCapacity &lt; 原始容量+当前add添加的minCapacity</code>，新容量大小为<code>原始容量+当前add添加的minCapacity</code></li>
+<li>计算出来的<code>newCapacity &gt; MAX_ARRAY_SIZE(Integer.MAX_VALUE - 8)</code>, 原始容量 &lt; <code>MAX_ARRAY_SIZE</code>, 则新容量为<code>MAX_ARRAY_SIZE</code></li>
+<li>计算出来的<code>newCapacity &gt; MAX_ARRAY_SIZE(Integer.MAX_VALUE - 8)</code>, 原始容量 &gt;= <code>MAX_ARRAY_SIZE</code>, 则新容量为<code>Integer.MAX_VALUE</code></li>
+</ol>
+<h3 id="最大容量"><a href="#最大容量" class="headerlink" title="最大容量"></a>最大容量</h3><ol>
+<li><p>我们来看下<code>MAX_ARRAY_SIZE</code>注释：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * The maximum size of array to allocate.</span><br><span class="line"> * Some VMs reserve some header words in an array.</span><br><span class="line"> * Attempts to allocate larger arrays may result in</span><br><span class="line"> * OutOfMemoryError: Requested array size exceeds VM limit</span><br><span class="line"> */</span><br><span class="line">private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>注释说的很明确，ArrayList在有些虚拟机上保留几个字节（8个字节），所以在这些虚拟机上最大容量是<code>Integer.MAX_VALUE-8</code>。正常情况下最大容量是<code>Integer.MAX_VALUE</code>。ArrayList中这段代码，小于0会报oom, 如果大于<code>MAX_ARRAY_SIZE</code>返回的是<code>Integer.MAX_VALUE</code>，但是在部分虚拟机上会报oom。</p>
+</li>
+</ol>
+<h3 id="remove删除后容量变化"><a href="#remove删除后容量变化" class="headerlink" title="remove删除后容量变化"></a>remove删除后容量变化</h3><ol>
+<li><p>remove删除某个下标的元素，该下标之后的元素通过<code>System.arraycopy</code>方法相当前移一位,但容量不会变化,也就是说删除不会进行缩容处理。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Removes the element at the specified position in this list.</span><br><span class="line"> * Shifts any subsequent elements to the left (subtracts one from their</span><br><span class="line"> * indices).</span><br><span class="line"> *</span><br><span class="line"> * @param index the index of the element to be removed</span><br><span class="line"> * @return the element that was removed from the list</span><br><span class="line"> * @throws IndexOutOfBoundsException &#123;@inheritDoc&#125;</span><br><span class="line"> */</span><br><span class="line">public E remove(int index) &#123;</span><br><span class="line">    rangeCheck(index);</span><br><span class="line">    modCount++;</span><br><span class="line">    E oldValue = elementData(index);</span><br><span class="line">    int numMoved = size - index - 1;</span><br><span class="line">    if (numMoved &gt; 0)</span><br><span class="line">        System.arraycopy(elementData, index+1, elementData, index,</span><br><span class="line">                         numMoved);</span><br><span class="line">    elementData[--size] = null; // clear to let GC do its work</span><br><span class="line">    return oldValue;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>验证删除前后容量不会变化。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">@Test</span><br><span class="line">@DisplayName(&quot;remove后容量&quot;)</span><br><span class="line">public void testAfterRemoveCapacity() throws NoSuchFieldException, IllegalAccessException &#123;</span><br><span class="line">    List&lt;Integer&gt; list = new ArrayList&lt;&gt;(10000);</span><br><span class="line">    Field field = ArrayList.class.getDeclaredField(&quot;elementData&quot;);</span><br><span class="line">    field.setAccessible(true);</span><br><span class="line">    Object[] objs = (Object[]) field.get(list);</span><br><span class="line">    list.add(1);</span><br><span class="line">    System.out.println(&quot;before remove capacity=&quot; + objs.length);</span><br><span class="line">    System.out.println(&quot;before remove size=&quot; + list.size());</span><br><span class="line">    list.remove(0);</span><br><span class="line">    System.out.println(&quot;after remove capacity=&quot; + objs.length);</span><br><span class="line">    System.out.println(&quot;after remove size=&quot; + list.size());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">结果：</span><br><span class="line">before remove capacity=10000</span><br><span class="line">before remove size=1</span><br><span class="line">after remove capacity=10000</span><br><span class="line">after remove size=0</span><br></pre></td></tr></table></figure>
+
+</li>
+</ol>
+<h2 id="ArrayList-遍历"><a href="#ArrayList-遍历" class="headerlink" title="ArrayList 遍历"></a>ArrayList 遍历</h2><h3 id="for遍历方式"><a href="#for遍历方式" class="headerlink" title="for遍历方式"></a>for遍历方式</h3><ol>
+<li>先插入100条数据，然后使用for方式遍历，通过get方法获取对应下标存储的对象。<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">@Test</span><br><span class="line">public void testArrayListTraverseByFor() &#123;</span><br><span class="line">    int size = 100;</span><br><span class="line">    List&lt;Integer&gt; list = new ArrayList&lt;&gt;(size);</span><br><span class="line">    for (int i = 0; i &lt; size; i++) &#123;</span><br><span class="line">        list.add(i);</span><br><span class="line">    &#125;</span><br><span class="line">    long startTime = System.currentTimeMillis();</span><br><span class="line">    for (int i = 0; i &lt; list.size(); i++) &#123;</span><br><span class="line">        list.get(i);</span><br><span class="line">        //TODO something</span><br><span class="line">    &#125;</span><br><span class="line">    System.out.println(System.currentTimeMillis() - startTime);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+</li>
+</ol>
+<h3 id="foreach遍历方式"><a href="#foreach遍历方式" class="headerlink" title="foreach遍历方式"></a>foreach遍历方式</h3><ol>
+<li>先插入100条数据，然后使用foreach方式遍历。<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">@Test</span><br><span class="line">@DisplayName(&quot;foreach方式遍历&quot;)</span><br><span class="line">public void testArrayListTraverseByForeach() &#123;</span><br><span class="line">    int size = 100;</span><br><span class="line">    List&lt;Integer&gt; list = new ArrayList&lt;&gt;(size);</span><br><span class="line">    for (int i = 0; i &lt; size; i++) &#123;</span><br><span class="line">        list.add(i);</span><br><span class="line">    &#125;</span><br><span class="line">    long startTime = System.currentTimeMillis();</span><br><span class="line">    for (Integer i : list) &#123;</span><br><span class="line">        //TODO something</span><br><span class="line">    &#125;</span><br><span class="line">    System.out.println(System.currentTimeMillis() - startTime);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+</li>
+</ol>
+<h3 id="迭代器遍历方式"><a href="#迭代器遍历方式" class="headerlink" title="迭代器遍历方式"></a>迭代器遍历方式</h3><ol>
+<li>先插入100条数据，然后使用Iterator遍历,通过<code>hasNext()</code>方法判断是否结束，next方法获取当前值。<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">@Test</span><br><span class="line">@DisplayName(&quot;迭代器方式遍历&quot;)</span><br><span class="line">public void testArrayListTraverseByIterator() &#123;</span><br><span class="line">    int size = 100;</span><br><span class="line">    List&lt;Integer&gt; list = new ArrayList&lt;&gt;(size);</span><br><span class="line">    for (int i = 0; i &lt; size; i++) &#123;</span><br><span class="line">        list.add(i);</span><br><span class="line">    &#125;</span><br><span class="line">    long startTime = System.currentTimeMillis();</span><br><span class="line">    for (Iterator&lt;Integer&gt; it = list.iterator(); it.hasNext();) &#123;</span><br><span class="line">        it.next();</span><br><span class="line">        //TODO something</span><br><span class="line">    &#125;</span><br><span class="line">    System.out.println(System.currentTimeMillis() - startTime);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+</li>
+</ol>
+<h3 id="性能对比"><a href="#性能对比" class="headerlink" title="性能对比"></a>性能对比</h3><ol>
+<li><p>首先我们创建容量为一千万的ArrayList，写入数据，通过三种方式遍历比较耗时情况。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">@Test</span><br><span class="line">@DisplayName(&quot;ArrayList遍历性能对比&quot;)</span><br><span class="line">public void testArrayListTraverse() &#123;</span><br><span class="line">    int size = 10000000;</span><br><span class="line">    List&lt;Integer&gt; list = new ArrayList&lt;&gt;(size);</span><br><span class="line">    for (int i = 0; i &lt; size; i++) &#123;</span><br><span class="line">        list.add(i);</span><br><span class="line">    &#125;</span><br><span class="line">    long startTime = System.currentTimeMillis();</span><br><span class="line">    for (int i = 0; i &lt; list.size(); i++) &#123;</span><br><span class="line">        list.get(i);</span><br><span class="line">        //TODO something</span><br><span class="line">    &#125;</span><br><span class="line">    System.out.println(&quot;for方式耗时 = &quot; + (System.currentTimeMillis() - startTime));</span><br><span class="line">    for (Integer i : list) &#123;</span><br><span class="line">        //TODO something</span><br><span class="line">    &#125;</span><br><span class="line">    System.out.println(&quot;foreach方式耗时 = &quot; + (System.currentTimeMillis() - startTime));</span><br><span class="line">    startTime = System.currentTimeMillis();</span><br><span class="line">    for (Iterator i = list.iterator(); i.hasNext(); ) &#123;</span><br><span class="line">        i.next();</span><br><span class="line">        //TODO something</span><br><span class="line">    &#125;</span><br><span class="line">    System.out.println(&quot;迭代器方式耗时 = &quot; + (System.currentTimeMillis() - startTime));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>结果如下所示。通过对比看到耗时情况对比 for &lt; 迭代器Iterator &lt; foreach。所以对于ArrayList来说遍历性能排序，for &gt; 迭代器Iterator &gt; foreach。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">for方式耗时 = 3</span><br><span class="line">foreach方式耗时 = 24</span><br><span class="line">迭代器方式耗时 = 4</span><br></pre></td></tr></table></figure>
+
+</li>
+</ol>
+<h2 id="ArryList相关问题"><a href="#ArryList相关问题" class="headerlink" title="ArryList相关问题"></a>ArryList相关问题</h2><h3 id="ArrayList异常抛出常见场景"><a href="#ArrayList异常抛出常见场景" class="headerlink" title="ArrayList异常抛出常见场景"></a>ArrayList异常抛出常见场景</h3><ol>
+<li>IllegalArgumentException</li>
+</ol>
+<ul>
+<li>构造方法<code>ArrayList(int initialCapacity)</code> 初始化initialCapacity填写为负数，</li>
+<li><code>subList(int fromIndex, int toIndex)</code>的fromIndex &gt; toIndex</li>
+</ul>
+<ol start="2">
+<li>NullPointerException</li>
+</ol>
+<ul>
+<li>构造方法<code>ArrayList(Collection&lt;? extends E&gt; c)</code> collection传入为null</li>
+<li><code>addAll(Collection&lt;? extends E&gt; c)</code> collection传入为null</li>
+<li><code>addAll(int index, Collection&lt;? extends E&gt; c)</code> collection传入为null</li>
+</ul>
+<ol start="3">
+<li>IndexOutOfBoundsException</li>
+</ol>
+<ul>
+<li><code>get(int index)</code> index下标越界</li>
+<li><code>set(int index, E element)</code> index下标越界</li>
+<li><code>add(int index, E element)</code> index下标越界</li>
+<li><code>remove(int index)</code> index下标越界</li>
+<li><code>addAll(int index, Collection&lt;? extends E&gt; c)</code> index下标越界</li>
+<li><code>removeRange(int fromIndex, int toIndex)</code> 下标越界</li>
+<li><code>subList(int fromIndex, int toIndex)</code> 下标越界</li>
+</ul>
+<ol start="4">
+<li>NoSuchElementException</li>
+</ol>
+<ul>
+<li>迭代器next或者previous操作越界</li>
+</ul>
+<ol start="5">
+<li>ConcurrentModificationException</li>
+</ol>
+<ul>
+<li>多线程同时操作添加或删除操作</li>
+</ul>
+<ol start="6">
+<li>IllegalStateException</li>
+</ol>
+<ul>
+<li>迭代器设置、删除操作未先next操作的情况</li>
+</ul>
+<h3 id="ArrayList安全的remove操作"><a href="#ArrayList安全的remove操作" class="headerlink" title="ArrayList安全的remove操作"></a>ArrayList安全的remove操作</h3><ol>
+<li><p>for循环里删除，使用外部定义的size会抛<code>IndexOutOfBoundsException</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">@Test</span><br><span class="line">public void testRemoveException() &#123;</span><br><span class="line">    int size = 10;</span><br><span class="line">    List&lt;Integer&gt; list = new ArrayList&lt;&gt;(size);</span><br><span class="line">    for (int i = 0; i &lt; size; i++) &#123;</span><br><span class="line">        list.add(i);</span><br><span class="line">    &#125;</span><br><span class="line">    for (int i = 0; i &lt; size; i++) &#123;</span><br><span class="line">        list.remove(i);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">结果：</span><br><span class="line">java.lang.IndexOutOfBoundsException: Index: 5, Size: 5</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>for循环里删除，使用ArrayList的size，可见size时一直在变化的。最终数据并没有删除完，还剩下一半的数据。如果想删除完可以将<code>list.remove(i);</code>替换为<code>list.remove(0);</code>，数组中的数据一直在变，下标也在变动。想匹配删除某个元素也比较麻烦，所以这种删除应用起来也比较鸡肋。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">@Test</span><br><span class="line">public void testRemoveByForArraListSize() &#123;</span><br><span class="line">    int size = 10;</span><br><span class="line">    List&lt;Integer&gt; list = new ArrayList&lt;&gt;(size);</span><br><span class="line">    for (int i = 0; i &lt; size; i++) &#123;</span><br><span class="line">        list.add(i);</span><br><span class="line">    &#125;</span><br><span class="line">    for (int i = 0; i &lt; list.size(); i++) &#123;</span><br><span class="line">        list.remove(i);</span><br><span class="line">        System.out.println(&quot;size=&quot; + list.size());</span><br><span class="line">    &#125;</span><br><span class="line">    System.out.println(&quot;end size=&quot; + list.size());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">结果：</span><br><span class="line">size=9</span><br><span class="line">size=8</span><br><span class="line">size=7</span><br><span class="line">size=6</span><br><span class="line">size=5</span><br><span class="line">end size=5</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>使用迭代器，边遍历边删除元素。可以在<code>it.remove();</code>前做逻辑判断等。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">@Test</span><br><span class="line">public void testRemoveByIterator() &#123;</span><br><span class="line">    int size = 10;</span><br><span class="line">    List&lt;Integer&gt; list = new ArrayList&lt;&gt;(size);</span><br><span class="line">    for (int i = 0; i &lt; size; i++) &#123;</span><br><span class="line">        list.add(i);</span><br><span class="line">    &#125;</span><br><span class="line">    for (Iterator it = list.iterator(); it.hasNext();) &#123;</span><br><span class="line">        it.next();</span><br><span class="line">        //TODO if</span><br><span class="line">        it.remove();</span><br><span class="line">    &#125;</span><br><span class="line">    System.out.println(&quot;end size=&quot; + list.size());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">结果：</span><br><span class="line">end size=0</span><br></pre></td></tr></table></figure>
+
+</li>
+</ol>
+<h3 id="ArrayList是非线程安全"><a href="#ArrayList是非线程安全" class="headerlink" title="ArrayList是非线程安全"></a>ArrayList是非线程安全</h3><ol>
+<li>如果第一个线程在删除，第二个线程在添加，第三个线程在读取。ArrayList的size会变化，具体变成多少是不确定的，所以很容易出现<code>IndexOutOfBoundsException</code>。</li>
+<li>避免方式</li>
+</ol>
+<ul>
+<li>采用单线程处理业务员。</li>
+<li>使用<code>CopyOnWriteArrayList</code>。</li>
+<li>对ArrayList的操作全部加锁，synchronized或者Lock。</li>
+<li>在初始化时用<code>Collections.synchronizedList</code>方法进行包装。</li>
+</ul>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://qiubyte.github.io/2019/10/22/2019/20191022-ArrayList源码分析/" title="ArrayList源码分析" target="_blank" rel="external">https://qiubyte.github.io/2019/10/22/2019/20191022-ArrayList源码分析/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.zh" target="_blank" rel="external">知识共享 署名-非商业性使用-禁止演绎 4.0 国际</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://qiubyte.github.io/" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://qiubyte.github.io/" target="_blank"><span class="text-dark">qiubyte</span><small class="ml-1x"></small></a></h3>
+        <div>纸上得来终觉浅，绝知此事须躬行</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2019/10/31/2019/20191031-commons-pool2的简单使用/" title="commons-pool2的简单使用"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2019/10/09/2019/20191009-mysql8.0授权远程登录连接/" title="mysql8.0 授权远程登录连接"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+    <li class="toggle-toc">
+      <a class="toggle-btn" data-toggle="collapse" href="#collapseToc" aria-expanded="true" title="文章目录" role="button">
+        <span>[&nbsp;</span><span>文章目录</span>
+        <i class="text-collapsed icon icon-anchor"></i>
+        <i class="text-in icon icon-close"></i>
+        <span>]</span>
+      </a>
+    </li>
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="wechat,weibo,facebook" data-mobile-sites="wechat,weibo"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipayimg.jpg" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开支付宝扫一扫，即可进行扫码打赏哦</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpayimg.jpg" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开微信扫一扫，即可进行扫码打赏哦</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/qiubyte" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        &copy; 2022 qiubyte
+        
+        <div class="publishby">
+        	Theme by<a href="https://github.com/cofess/hexo-theme-pure" target="_blank"> cofess pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+<script src="/js/plugin.min.js"></script>
+<script src="/js/application.js"></script>
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: '',
+    appKey: '',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>
